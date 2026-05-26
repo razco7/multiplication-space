@@ -86,9 +86,8 @@ function resizeCanvas(){
   const avH=Math.max(window.innerHeight-usedH, 160);
   const avW=window.innerWidth-32;
   const ratio=4/5;
-  let cw,ch;
-  if(avW/avH>ratio){ch=Math.min(avH,750);cw=Math.round(ch*ratio);}
-  else{cw=Math.min(avW,600);ch=Math.round(cw/ratio);}
+  const cw=Math.min(avW,600);
+  const ch=Math.min(Math.round(cw/ratio),avH);
   W=cw;H=ch;
   canvas.width=W;canvas.height=H;
 }
