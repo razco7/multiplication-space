@@ -7,7 +7,7 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;background:#0a0a1a;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;color:#fff;}
-  body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 16px 8px;}
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom));}
   #ui{width:100%;max-width:600px;flex-shrink:0;}
   h1{font-size:clamp(16px,3.5vw,18px);font-weight:700;margin-bottom:2px;letter-spacing:1px;color:#c5c1f5;text-align:center;}
   .num-label{font-size:14px;color:#888;margin-bottom:10px;text-align:center;}
@@ -82,7 +82,7 @@ function resizeCanvas(){
   const ui=document.getElementById('ui');
   const mc=document.querySelector('.mobile-controls');
   const hint=document.querySelector('.controls-hint');
-  const usedH=ui.getBoundingClientRect().height+(mc?mc.getBoundingClientRect().height:0)+(hint?hint.getBoundingClientRect().height:0)+28;
+  const usedH=ui.getBoundingClientRect().height+(mc?mc.getBoundingClientRect().height:0)+(hint?hint.getBoundingClientRect().height:0)+48;
   const avH=Math.max(window.innerHeight-usedH, 160);
   const avW=window.innerWidth-32;
   const ratio=4/5;
@@ -380,10 +380,9 @@ function resetAll(){
 }
 
 // ── Boot ───────────────────────────────────────────────────
-resizeCanvas();initStars();
 window.addEventListener('resize',()=>{resizeCanvas();if(!gameRunning){ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);drawStars();}});
 renderGrid();
-ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);
+requestAnimationFrame(()=>{resizeCanvas();initStars();ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);drawStars();});
 drawStars();
 </script>
 
