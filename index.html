@@ -340,7 +340,7 @@ function showEnd(){
       <button onclick="initGame()" style="padding:10px 18px;font-size:14px;font-weight:700;border-radius:10px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;width:100%;">\ud83d\udd04 \u05e9\u05d7\u05e7 \u05e9\u05d5\u05d1</button>
       <button onclick="resetAll()" style="padding:10px 18px;font-size:14px;font-weight:700;border-radius:10px;border:2px solid #3a3560;background:transparent;color:#aaa;cursor:pointer;width:100%;">\u05e9\u05e0\u05d4 \u05e1\u05e4\u05e8\u05d4</button>
     </div>`;
-  setTimeout(()=>{const inp=document.getElementById('playerName');if(inp)inp.focus();},150);
+  setTimeout(()=>{const inp=document.getElementById('playerName');if(inp){const saved=localStorage.getItem('playerName');if(saved)inp.value=saved;inp.focus();}},150);
   if(window.renderLB)window.renderLB();
 }
 
@@ -424,6 +424,7 @@ window.handleSubmitScore=async()=>{
   if(!inp)return;
   const name=inp.value.trim();
   if(!name){inp.style.borderColor='#f09595';inp.focus();return;}
+  localStorage.setItem('playerName',name);
   inp.disabled=true;
   document.getElementById('lbForm').innerHTML=`<p style="color:#9FE1CB;font-size:14px;margin:6px 0;">✓ נשמר בשם ${name}!</p>`;
   try{
