@@ -326,13 +326,13 @@ function showEnd(){
     <p style="font-size:14px;color:#888;margin-bottom:3px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e0\u05db\u05d5\u05e0\u05d5\u05ea: ${Math.round(score/10)}</p>
     <p style="font-size:14px;color:#EF9F27;margin-bottom:8px;">\ud83c\udfc6 \u05e9\u05d9\u05d0: ${highScore}</p>
     ${errHtml}
-    <div id="lbForm" style="display:flex;gap:8px;align-items:center;justify-content:center;margin:6px 0 4px;direction:rtl;">
+    <div id="lbForm" style="display:flex;flex-direction:column;gap:8px;align-items:stretch;width:90%;max-width:320px;margin:6px auto 4px;">
       <input id="playerName" type="text" maxlength="12" placeholder="\u05d4\u05e9\u05dd \u05e9\u05dc\u05da" dir="rtl" autocomplete="off"
-        style="padding:10px 14px;border-radius:10px;border:2px solid #3a3560;background:#1a1a3a;color:#fff;font-size:16px;width:150px;outline:none;text-align:center;"
+        style="padding:10px 14px;border-radius:10px;border:2px solid #3a3560;background:#1a1a3a;color:#fff;font-size:16px;width:100%;outline:none;text-align:center;"
         onkeydown="if(event.key==='Enter')handleSubmitScore()">
       <button onclick="handleSubmitScore()"
-        style="padding:10px 18px;font-size:14px;font-weight:700;border-radius:10px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;">
-        \u05e9\u05de\u05d5\u05e8 \u2192
+        style="padding:10px 18px;font-size:14px;font-weight:700;border-radius:10px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;width:100%;">
+        \u2190 \u05e9\u05de\u05d5\u05e8
       </button>
     </div>
     <div id="lbSection" style="width:100%;"></div>
