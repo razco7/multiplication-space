@@ -9,16 +9,16 @@
   html,body{height:100%;background:#0a0a1a;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;color:#fff;}
   body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 16px 8px;}
   #ui{width:100%;max-width:600px;flex-shrink:0;}
-  h1{font-size:clamp(13px,3.5vw,18px);font-weight:700;margin-bottom:3px;letter-spacing:1px;color:#c5c1f5;text-align:center;}
-  .num-label{font-size:11px;color:#888;margin-bottom:4px;text-align:center;}
-  .number-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:5px;direction:ltr;}
+  h1{font-size:clamp(13px,3.5vw,18px);font-weight:700;margin-bottom:8px;letter-spacing:1px;color:#c5c1f5;text-align:center;}
+  .num-label{font-size:11px;color:#888;margin-bottom:6px;text-align:center;}
+  .number-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px;direction:ltr;}
   .num-btn{padding:clamp(5px,1.2vh,9px) 0;font-size:clamp(13px,3vw,17px);font-weight:700;border:2px solid #3a3560;border-radius:10px;background:#1a1a3a;color:#c5c1f5;cursor:pointer;transition:all .15s;}
   .num-btn:hover{background:#2a2560;border-color:#7f77dd;}
   .num-btn.active{background:#5b4fcf;color:#fff;border-color:#7f77dd;}
-  .btn-challenge{display:block;width:100%;margin-bottom:5px;padding:clamp(5px,1.2vh,9px);font-size:clamp(11px,2.5vw,13px);font-weight:700;border-radius:10px;border:2px solid #d85a30;background:#2a1a10;color:#f5c4b3;cursor:pointer;text-align:center;transition:all .15s;}
+  .btn-challenge{display:block;width:100%;margin-bottom:0;padding:clamp(5px,1.2vh,9px);font-size:clamp(11px,2.5vw,13px);font-weight:700;border-radius:10px;border:2px solid #d85a30;background:#2a1a10;color:#f5c4b3;cursor:pointer;text-align:center;transition:all .15s;}
   .btn-challenge:hover{background:#3a2010;}
   .btn-challenge.active-ch{background:#d85a30;color:#fff;border-color:#f09595;}
-  .canvas-wrap{position:relative;flex-shrink:0;flex-grow:0;width:100%;max-width:600px;display:flex;align-items:flex-start;justify-content:center;}
+  .canvas-wrap{position:relative;flex-shrink:0;flex-grow:0;width:100%;max-width:600px;display:flex;align-items:flex-start;justify-content:center;margin-top:8px;}
   canvas{display:block;border-radius:12px;border:2px solid #2a2560;background:#080818;}
   #overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:rgba(8,8,24,.85);pointer-events:none;}
   #overlay h2{font-size:clamp(16px,4vw,24px);font-weight:700;color:#c5c1f5;margin-bottom:6px;}
@@ -87,8 +87,8 @@ function resizeCanvas(){
   const avW=window.innerWidth-32;
   const ratio=4/5;
   let cw,ch;
-  if(avW/avH>ratio){ch=Math.min(avH,700);cw=Math.round(ch*ratio);}
-  else{cw=Math.min(avW,560);ch=Math.round(cw/ratio);}
+  if(avW/avH>ratio){ch=Math.min(avH,750);cw=Math.round(ch*ratio);}
+  else{cw=Math.min(avW,600);ch=Math.round(cw/ratio);}
   W=cw;H=ch;
   canvas.width=W;canvas.height=H;
 }
