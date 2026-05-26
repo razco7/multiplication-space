@@ -312,21 +312,34 @@ function showEnd(){
   cancelAnimationFrame(animId);
   if(score>highScore){highScore=score;localStorage.setItem('multHS',highScore);}
   draw();
+  window._gameScore=score;
   const ov=document.getElementById('overlay');
   ov.style.display='flex';ov.style.pointerEvents='auto';
   let errHtml='';
   if(wrongAnswers.length>0){
     const rows=wrongAnswers.map(e=>`<tr><td style="padding:3px 10px;color:#c5c1f5;">${e.a}\u00d7${e.b}</td><td style="padding:3px 10px;color:#f09595;">${e.got}</td><td style="padding:3px 10px;color:#9FE1CB;">\u2713 ${e.ans}</td></tr>`).join('');
-    errHtml=`<div style="margin:10px 0 14px;background:rgba(0,0,0,.5);border-radius:10px;padding:8px 4px;max-height:140px;overflow-y:auto;width:90%;"><p style="font-size:clamp(10px,2.2vw,12px);color:#f09595;margin-bottom:5px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e9\u05d8\u05e2\u05d9\u05ea \u05d1\u05d4\u05df (${wrongAnswers.length})</p><table style="width:100%;border-collapse:collapse;font-size:clamp(11px,2.5vw,13px);font-weight:700;text-align:center;"><thead><tr><td style="padding:2px 8px;color:#888;">\u05e9\u05d0\u05dc\u05d4</td><td style="padding:2px 8px;color:#888;">\u05e2\u05e0\u05d9\u05ea</td><td style="padding:2px 8px;color:#888;">\u05e0\u05db\u05d5\u05df</td></tr></thead><tbody>${rows}</tbody></table></div>`;
+    errHtml=`<div style="margin:10px 0 12px;background:rgba(0,0,0,.5);border-radius:10px;padding:8px 4px;max-height:130px;overflow-y:auto;width:90%;"><p style="font-size:12px;color:#f09595;margin-bottom:5px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e9\u05d8\u05e2\u05d9\u05ea \u05d1\u05d4\u05df (${wrongAnswers.length})</p><table style="width:100%;border-collapse:collapse;font-size:13px;font-weight:700;text-align:center;"><thead><tr><td style="padding:2px 8px;color:#888;">\u05e9\u05d0\u05dc\u05d4</td><td style="padding:2px 8px;color:#888;">\u05e2\u05e0\u05d9\u05ea</td><td style="padding:2px 8px;color:#888;">\u05e0\u05db\u05d5\u05df</td></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   ov.innerHTML=`
-    <h2 style="color:#f09595;margin-bottom:6px;">&#128165; \u05de\u05e9\u05d7\u05e7 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd</h2>
+    <h2 style="color:#f09595;margin-bottom:6px;">\ud83d\udca5 \u05de\u05e9\u05d7\u05e7 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd</h2>
     <p style="font-size:clamp(16px,4vw,20px);font-weight:700;color:#c5c1f5;margin-bottom:3px;">\u05e0\u05d9\u05e7\u05d5\u05d3: ${score}</p>
-    <p style="font-size:clamp(11px,2.5vw,13px);color:#888;margin-bottom:3px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e0\u05db\u05d5\u05e0\u05d5\u05ea: ${Math.round(score/10)}</p>
-    <p style="font-size:clamp(11px,2.5vw,13px);color:#EF9F27;margin-bottom:8px;">&#127942; \u05e9\u05d9\u05d0: ${highScore}</p>
+    <p style="font-size:14px;color:#888;margin-bottom:3px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e0\u05db\u05d5\u05e0\u05d5\u05ea: ${Math.round(score/10)}</p>
+    <p style="font-size:14px;color:#EF9F27;margin-bottom:8px;">\ud83c\udfc6 \u05e9\u05d9\u05d0: ${highScore}</p>
     ${errHtml}
-    <button onclick="initGame()" style="padding:10px 26px;font-size:clamp(13px,3vw,15px);font-weight:700;border-radius:12px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;margin-bottom:8px;">&#128257; \u05e9\u05d7\u05e7 \u05e9\u05d5\u05d1</button>
-    <button onclick="resetAll()" style="padding:8px 20px;font-size:clamp(11px,2.5vw,13px);font-weight:700;border-radius:12px;border:2px solid #3a3560;background:transparent;color:#888;cursor:pointer;">\u05e9\u05e0\u05d4 \u05e1\u05e4\u05e8\u05d4</button>`;
+    <div id="lbForm" style="display:flex;gap:8px;align-items:center;justify-content:center;margin:6px 0 4px;direction:rtl;">
+      <input id="playerName" type="text" maxlength="12" placeholder="\u05d4\u05e9\u05dd \u05e9\u05dc\u05da" dir="rtl" autocomplete="off"
+        style="padding:10px 14px;border-radius:10px;border:2px solid #3a3560;background:#1a1a3a;color:#fff;font-size:16px;width:150px;outline:none;text-align:center;"
+        onkeydown="if(event.key==='Enter')handleSubmitScore()">
+      <button onclick="handleSubmitScore()"
+        style="padding:10px 18px;font-size:14px;font-weight:700;border-radius:10px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;">
+        \u05e9\u05de\u05d5\u05e8 \u2192
+      </button>
+    </div>
+    <div id="lbSection" style="width:100%;"></div>
+    <button onclick="initGame()" style="padding:10px 26px;font-size:14px;font-weight:700;border-radius:12px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;margin:14px 0 8px;">\ud83d\udd04 \u05e9\u05d7\u05e7 \u05e9\u05d5\u05d1</button>
+    <button onclick="resetAll()" style="padding:8px 20px;font-size:14px;font-weight:700;border-radius:12px;border:2px solid #3a3560;background:transparent;color:#888;cursor:pointer;">\u05e9\u05e0\u05d4 \u05e1\u05e4\u05e8\u05d4</button>`;
+  setTimeout(()=>{const inp=document.getElementById('playerName');if(inp)inp.focus();},150);
+  if(window.renderLB)window.renderLB();
 }
 
 function loop(){if(!gameRunning)return;update();draw();animId=requestAnimationFrame(loop);}
@@ -371,6 +384,51 @@ window.addEventListener('resize',()=>{resizeCanvas();if(!gameRunning){ctx.fillSt
 renderGrid();
 ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);
 drawStars();
+</script>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import{getFirestore,collection,addDoc,query,orderBy,limit,getDocs,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+const db=getFirestore(initializeApp({
+  apiKey:"AIzaSyDkz8SDpubUgfRSK4ERD5oPqjIoPrGQB7U",
+  authDomain:"multiplication-space.firebaseapp.com",
+  projectId:"multiplication-space",
+  storageBucket:"multiplication-space.firebasestorage.app",
+  messagingSenderId:"332180001769",
+  appId:"1:332180001769:web:18e8a04bd0fb780a93f178"
+}));
+
+async function renderLB(hl=''){
+  const el=document.getElementById('lbSection');
+  if(!el)return;
+  el.innerHTML='<p style="color:#888;font-size:13px;margin:10px 0;text-align:center;">טוען לוח תוצאות...</p>';
+  try{
+    const snap=await getDocs(query(collection(db,'scores'),orderBy('score','desc'),limit(10)));
+    const rows=snap.docs.map(d=>d.data());
+    if(!rows.length){el.innerHTML='';return;}
+    const M=['🥇','🥈','🥉'];
+    const trs=rows.map((r,i)=>{
+      const hi=(r.name===hl&&r.score===(window._gameScore||0))?'background:rgba(91,79,207,.4);border-radius:6px;':'';
+      return`<tr style="${hi}"><td style="padding:5px 8px;text-align:center">${M[i]||(i+1)+'.'}</td><td style="padding:5px 14px;font-weight:700;color:#c5c1f5">${r.name}</td><td style="padding:5px 8px;color:#9FE1CB;font-weight:700;text-align:center">${r.score}</td></tr>`;
+    }).join('');
+    el.innerHTML=`<p style="font-size:14px;color:#c5c1f5;font-weight:700;margin:14px 0 6px;text-align:center;">🏆 לוח התוצאות</p><table style="width:90%;margin:0 auto;border-collapse:collapse;font-size:14px;direction:rtl;">${trs}</table>`;
+  }catch(e){el.innerHTML='';}
+}
+window.renderLB=renderLB;
+
+window.handleSubmitScore=async()=>{
+  const inp=document.getElementById('playerName');
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){inp.style.borderColor='#f09595';inp.focus();return;}
+  inp.disabled=true;
+  document.getElementById('lbForm').innerHTML=`<p style="color:#9FE1CB;font-size:14px;margin:6px 0;">✓ נשמר בשם ${name}!</p>`;
+  try{
+    await addDoc(collection(db,'scores'),{name,score:window._gameScore||0,ts:serverTimestamp()});
+  }catch(e){console.warn('save failed',e);}
+  renderLB(name);
+};
 </script>
 </body>
 </html>
