@@ -349,7 +349,7 @@ function loop(){if(!gameRunning)return;update();draw();animId=requestAnimationFr
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;
   if(e.key==='ArrowRight'||e.key==='d')keys.right=true;
-  if(e.key===' '){e.preventDefault();fireBullet();}
+  if(e.key===' '&&document.activeElement.tagName!=='INPUT'){e.preventDefault();fireBullet();}
 });
 document.addEventListener('keyup',e=>{
   if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;
