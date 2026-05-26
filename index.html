@@ -256,25 +256,26 @@ function draw(){
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(wrongMsg,W/2,H/2);
   }
   // HUD bg
-  ctx.fillStyle='rgba(10,10,30,.75)';ctx.fillRect(0,0,W,Math.round(H*.1));
+  const HP=12;
+  ctx.fillStyle='rgba(10,10,30,.75)';ctx.fillRect(0,0,W,Math.round(H*.1)+HP);
   const hudMid=Math.round(H*.05);
   const fs=Math.max(11,Math.round(W*.032));
   // question — drawn LTR by reversing canvas direction trick: just build string normally, canvas is neutral here
   ctx.fillStyle='#c5c1f5';ctx.font=`bold ${Math.round(W*.068)}px Segoe UI,Arial,sans-serif`;
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(currentQ.a+' \u00d7 '+currentQ.b+' = ?',W/2,hudMid*.6);
+  ctx.fillText(currentQ.a+' \u00d7 '+currentQ.b+' = ?',W/2,hudMid*.6+HP);
   // score
   ctx.fillStyle='#9FE1CB';ctx.font=`bold ${fs}px Segoe UI,Arial,sans-serif`;
-  ctx.textAlign='right';ctx.fillText('\u05e0\u05d9\u05e7\u05d5\u05d3: '+score,W-8,hudMid*1.55);
+  ctx.textAlign='right';ctx.fillText('\u05e0\u05d9\u05e7\u05d5\u05d3: '+score,W-HP,hudMid*1.55+HP);
   // highscore
   ctx.fillStyle='#EF9F27';ctx.textAlign='left';
-  ctx.fillText('\u05e9\u05d9\u05d0: '+highScore,8,hudMid*.45);
+  ctx.fillText('\u05e9\u05d9\u05d0: '+highScore,HP,hudMid*.45+HP);
   // lives
   ctx.fillStyle='#f09595';
-  ctx.fillText('\u2665'.repeat(lives)+'\u2661'.repeat(Math.max(0,3-lives)),8,hudMid*1.55);
+  ctx.fillText('\u2665'.repeat(lives)+'\u2661'.repeat(Math.max(0,3-lives)),HP,hudMid*1.55+HP);
   // level (group of 5 correct = 1 level)
   ctx.fillStyle='#EF9F27';ctx.textAlign='center';
-  ctx.fillText('\u05e8\u05de\u05d4 '+(Math.floor(questionNum/5)+1),W/2,hudMid*1.55);
+  ctx.fillText('\u05e8\u05de\u05d4 '+(Math.floor(questionNum/5)+1),W/2,hudMid*1.55+HP);
 
   // level-up flash overlay
   if(levelUpFlash>0){
