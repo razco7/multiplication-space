@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>כפל בחלל</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:#0a0a1a;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;color:#fff;}
+  body{display:flex;flex-direction:column;align-items:center;padding:6px 16px 8px;}
+  #ui{width:100%;max-width:600px;flex-shrink:0;}
+  h1{font-size:clamp(13px,3.5vw,18px);font-weight:700;margin-bottom:3px;letter-spacing:1px;color:#c5c1f5;text-align:center;}
+  .num-label{font-size:11px;color:#888;margin-bottom:4px;text-align:center;}
+  .number-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:5px;direction:ltr;}
+  .num-btn{padding:clamp(5px,1.2vh,9px) 0;font-size:clamp(13px,3vw,17px);font-weight:700;border:2px solid #3a3560;border-radius:10px;background:#1a1a3a;color:#c5c1f5;cursor:pointer;transition:all .15s;}
+  .num-btn:hover{background:#2a2560;border-color:#7f77dd;}
+  .num-btn.active{background:#5b4fcf;color:#fff;border-color:#7f77dd;}
+  .btn-challenge{display:block;width:100%;margin-bottom:5px;padding:clamp(5px,1.2vh,9px);font-size:clamp(11px,2.5vw,13px);font-weight:700;border-radius:10px;border:2px solid #d85a30;background:#2a1a10;color:#f5c4b3;cursor:pointer;text-align:center;transition:all .15s;}
+  .btn-challenge:hover{background:#3a2010;}
+  .btn-challenge.active-ch{background:#d85a30;color:#fff;border-color:#f09595;}
+  .canvas-wrap{position:relative;flex-shrink:0;flex-grow:0;width:100%;max-width:600px;display:flex;align-items:flex-start;justify-content:center;}
+  canvas{display:block;border-radius:12px;border:2px solid #2a2560;background:#080818;}
+  #overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:rgba(8,8,24,.85);pointer-events:none;}
+  #overlay h2{font-size:clamp(16px,4vw,24px);font-weight:700;color:#c5c1f5;margin-bottom:6px;}
+  #overlay p{font-size:clamp(12px,2.5vw,14px);color:#888;}
+  .controls-hint{font-size:10px;color:#444;margin-top:3px;text-align:center;flex-shrink:0;}
+  .mobile-controls{display:flex;width:100%;max-width:600px;gap:6px;margin-top:4px;flex-shrink:0;}
+  .mc-btn{flex:1;padding:clamp(10px,2vh,15px) 0;font-size:clamp(16px,4vw,22px);font-weight:700;border-radius:12px;border:2px solid #3a3560;background:#1a1a3a;color:#c5c1f5;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+  .mc-btn:active{background:#2a2560;}
+  .mc-fire{flex:1.4;background:#5b4fcf;border-color:#7f77dd;color:#fff;}
+  .mc-fire:active{background:#4a3fb8;}
+</style>
+</head>
+<body>
+<div id="ui" dir="rtl">
+  <h1>&#128640; כפל בחלל &#128640;</h1>
+  <div class="num-label">בחר ספרה</div>
+  <div class="number-grid" id="numGrid" dir="ltr"></div>
+  <button class="btn-challenge" id="challengeBtn" onclick="pickChallenge()">&#127942; מצב אתגר — כל הספרות</button>
+</div>
+<div class="canvas-wrap" dir="ltr">
+  <canvas id="c"></canvas>
+  <div id="overlay"><h2>&#128640; כפל בחלל</h2><p>בחר ספרה כדי להתחיל</p></div>
+</div>
+<div class="controls-hint">&#8592; &#8594; להזזה &nbsp;|&nbsp; רווח לירי</div>
+<div class="mobile-controls">
+  <button class="mc-btn" ontouchstart="event.preventDefault();keys.left=true" ontouchend="event.preventDefault();keys.left=false">&#8592;</button>
+  <button class="mc-btn mc-fire" ontouchstart="event.preventDefault();fireBullet()">&#128293; ירי</button>
+  <button class="mc-btn" ontouchstart="event.preventDefault();keys.right=true" ontouchend="event.preventDefault();keys.right=false">&#8594;</button>
+</div>
+
+<script>
+// ── Audio ──────────────────────────────────────────────────
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function resumeAC(){if(AC.state==='suspended')AC.resume();}
+function playShoot(){const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type='square';o.frequency.setValueAtTime(880,AC.currentTime);o.frequency.exponentialRampToValueAtTime(220,AC.currentTime+0.12);g.gain.setValueAtTime(0.18,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.12);o.start();o.stop(AC.currentTime+0.13);}
+function playCorrect(){[523,659,784].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type='sine';o.frequency.value=f;const t=AC.currentTime+i*0.1;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.22,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.18);o.start(t);o.stop(t+0.2);});}
+function playWrong(){const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type='sawtooth';o.frequency.setValueAtTime(220,AC.currentTime);o.frequency.exponentialRampToValueAtTime(80,AC.currentTime+0.35);g.gain.setValueAtTime(0.22,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.35);o.start();o.stop(AC.currentTime+0.36);}
+function playExplosion(){const buf=AC.createBuffer(1,AC.sampleRate*0.25,AC.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);const src=AC.createBufferSource(),g=AC.createGain(),filt=AC.createBiquadFilter();filt.type='bandpass';filt.frequency.value=400;src.buffer=buf;src.connect(filt);filt.connect(g);g.connect(AC.destination);g.gain.setValueAtTime(0.35,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.25);src.start();src.stop(AC.currentTime+0.26);}
+
+// ── State ──────────────────────────────────────────────────
+let W=400,H=500;
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+
+let chosen=null,isChallenge=false;
+let lives,score,questionNum,gameRunning=false,animId;
+let ship,bullets,asteroids,particles,currentQ,wrongFlash,levelSpeed,wrongMsg,wrongMsgTimer,questionQueue;
+let levelUpFlash=0,wrongAnswers=[];
+let stars=[];
+let highScore=parseInt(localStorage.getItem('multHS')||'0');
+const keys={left:false,right:false};
+const COLORS=['#5b8dd9','#d85a30','#1d9e75','#d4537e','#ba7517'];
+
+// ── Helpers ────────────────────────────────────────────────
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function rand(a,b){return Math.random()*(b-a)+a;}
+
+// ── Resize ─────────────────────────────────────────────────
+function resizeCanvas(){
+  const ui=document.getElementById('ui');
+  const mc=document.querySelector('.mobile-controls');
+  const hint=document.querySelector('.controls-hint');
+  const usedH=ui.getBoundingClientRect().height+(mc?mc.getBoundingClientRect().height:0)+(hint?hint.getBoundingClientRect().height:0)+28;
+  const avH=Math.max(window.innerHeight-usedH, 160);
+  const avW=window.innerWidth-32;
+  const ratio=4/5;
+  let cw,ch;
+  if(avW/avH>ratio){ch=Math.min(avH,700);cw=Math.round(ch*ratio);}
+  else{cw=Math.min(avW,560);ch=Math.round(cw/ratio);}
+  W=cw;H=ch;
+  canvas.width=W;canvas.height=H;
+}
+
+// ── Questions ──────────────────────────────────────────────
+function buildQueue(n,ch){
+  let p=[];
+  if(ch){for(let a=2;a<=10;a++)for(let b=1;b<=10;b++)p.push({a,b,ans:a*b});}
+  else{for(let b=1;b<=10;b++)p.push({a:n,b,ans:n*b});}
+  return shuffle(p);
+}
+function nextFromQueue(){
+  if(!questionQueue.length)questionQueue=buildQueue(chosen,isChallenge);
+  return questionQueue.shift();
+}
+function makeChoices(correct){
+  const s=new Set([correct]);
+  let t=0;
+  while(s.size<4&&t++<300){const v=correct+(Math.floor(Math.random()*9)+1)*(Math.random()<.5?1:-1);if(v>0)s.add(v);}
+  return shuffle([...s]);
+}
+
+// ── Spawn ──────────────────────────────────────────────────
+function spawnAsteroids(q){
+  const choices=makeChoices(q.ans);
+  const step=W/4;
+  const cols=[step*.5,step*1.5,step*2.5,step*3.5];
+  shuffle(cols);
+  asteroids=choices.map((val,i)=>({
+    x:cols[i],y:-60-i*28,r:Math.round(W*0.077),val,
+    isCorrect:val===q.ans,
+    color:COLORS[i%COLORS.length],
+    speed:rand(.35,.6)+levelSpeed,
+    angle:rand(0,Math.PI*2),spin:rand(-.02,.02),
+    wobble:rand(0,Math.PI*2),wobbleSpeed:rand(.01,.03),wobbleAmp:rand(.5,1.5),
+    alive:true,
+  }));
+}
+
+// ── Init ───────────────────────────────────────────────────
+function initGame(){
+  resizeCanvas();
+  ship={x:W/2,y:H-50,w:36,h:28,speed:4};
+  bullets=[];particles=[];
+  wrongFlash=0;wrongMsg='';wrongMsgTimer=0;levelUpFlash=0;wrongAnswers=[];
+  lives=3;score=0;questionNum=0;levelSpeed=0;
+  initStars();
+  questionQueue=buildQueue(chosen,isChallenge);
+  currentQ=nextFromQueue();
+  spawnAsteroids(currentQ);
+  gameRunning=true;
+  const ov=document.getElementById('overlay');
+  ov.style.display='none';ov.style.pointerEvents='none';
+  if(animId)cancelAnimationFrame(animId);
+  loop();
+}
+
+function fireBullet(){
+  if(!gameRunning)return;
+  resumeAC();playShoot();
+  bullets.push({x:ship.x,y:ship.y-ship.h/2,r:4,speed:10});
+}
+
+function spawnParticles(x,y,color,n=12){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,s=rand(1,5);
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,color,r:rand(2,5)});
+  }
+}
+
+function nextQuestion(){
+  currentQ=nextFromQueue();questionNum++;
+  if(questionNum>0&&questionNum%5===0)levelUpFlash=90;
+  spawnAsteroids(currentQ);
+}
+
+// ── Update ─────────────────────────────────────────────────
+function update(){
+  updateStars();
+  if(keys.left&&ship.x>ship.w/2+10)ship.x-=ship.speed;
+  if(keys.right&&ship.x<W-ship.w/2-10)ship.x+=ship.speed;
+  bullets=bullets.filter(b=>{b.y-=b.speed;return b.y>-10;});
+  asteroids.forEach(a=>{
+    if(!a.alive)return;
+    a.y+=a.speed;a.wobble+=a.wobbleSpeed;
+    a.x+=Math.sin(a.wobble)*a.wobbleAmp;a.angle+=a.spin;
+    a.x=Math.max(a.r+5,Math.min(W-a.r-5,a.x));
+    bullets.forEach((b,bi)=>{
+      if(!a.alive)return;
+      const dx=b.x-a.x,dy=b.y-a.y;
+      if(Math.sqrt(dx*dx+dy*dy)<a.r+b.r){
+        bullets.splice(bi,1);a.alive=false;
+        if(a.isCorrect){
+          score+=10;levelSpeed=Math.min(questionNum*0.08,1.2);
+          bullets=[];spawnParticles(a.x,a.y,'#c0dd97',20);playCorrect();
+          setTimeout(nextQuestion,400);
+        } else {
+          lives--;wrongFlash=30;
+          wrongAnswers.push({a:currentQ.a,b:currentQ.b,ans:currentQ.ans,got:a.val});
+          wrongMsg=`\u05d8\u05e2\u05d5\u05ea! \u05d4\u05ea\u05e9\u05d5\u05d1\u05d4 \u05d4\u05e0\u05db\u05d5\u05e0\u05d4 \u05d4\u05d9\u05d0 ${currentQ.ans}`;
+          wrongMsgTimer=120;
+          spawnParticles(a.x,a.y,'#f09595',14);playExplosion();playWrong();
+          asteroids.forEach(ast=>ast.alive=false);
+          setTimeout(()=>{if(gameRunning)nextQuestion();},1200);
+        }
+      }
+    });
+    if(a.alive&&a.y>H+a.r){
+      if(a.isCorrect){lives--;wrongFlash=20;}
+      a.y=-60;a.x=rand(a.r+10,W-a.r-10);
+    }
+  });
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.92;p.vy*=.92;p.life-=.025;return p.life>0;});
+  if(wrongFlash>0)wrongFlash--;
+  if(lives<=0){gameRunning=false;showEnd();}
+}
+
+// ── Stars ──────────────────────────────────────────────────
+function initStars(){
+  stars=[];
+  for(let i=0;i<70;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()<0.25?1.5:0.8,speed:0.3+Math.random()*0.7});
+}
+function updateStars(){
+  stars.forEach(s=>{s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W;}});
+}
+function drawStars(){
+  stars.forEach(s=>{ctx.fillStyle=`rgba(255,255,255,${0.4+s.r*.2})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});
+}
+
+// ── Draw ───────────────────────────────────────────────────
+
+function drawShip(x,y){
+  ctx.save();ctx.translate(x,y);
+  ctx.fillStyle='#7f77dd';ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(-14,12);ctx.lineTo(-6,8);ctx.lineTo(0,14);ctx.lineTo(6,8);ctx.lineTo(14,12);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#c5c1f5';ctx.beginPath();ctx.ellipse(0,-4,5,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#534ab7';ctx.beginPath();ctx.moveTo(-14,12);ctx.lineTo(-6,8);ctx.lineTo(-8,14);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(14,12);ctx.lineTo(6,8);ctx.lineTo(8,14);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(239,159,39,.85)';ctx.beginPath();ctx.moveTo(-5,14);ctx.lineTo(0,14+rand(6,14));ctx.lineTo(5,14);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
+function drawAsteroid(a){
+  if(!a.alive)return;
+  ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.angle);
+  ctx.fillStyle=a.color+'44';ctx.strokeStyle=a.color;ctx.lineWidth=2.5;
+  ctx.beginPath();
+  for(let i=0;i<8;i++){const ang=i/8*Math.PI*2,r=a.r*(.78+Math.sin(i*2.3+a.wobble*.3)*.22);i?ctx.lineTo(Math.cos(ang)*r,Math.sin(ang)*r):ctx.moveTo(Math.cos(ang)*r,Math.sin(ang)*r);}
+  ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.rotate(-a.angle);ctx.fillStyle='#fff';
+  ctx.font=`bold ${Math.round(a.r*.56)}px Segoe UI,Arial,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(a.val,0,0);
+  ctx.restore();
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);
+  drawStars();
+  if(wrongFlash>0){ctx.fillStyle=`rgba(220,50,50,${wrongFlash/20*.25})`;ctx.fillRect(0,0,W,H);}
+  if(wrongMsgTimer>0){
+    wrongMsgTimer--;
+    ctx.fillStyle='rgba(160,30,30,.6)';ctx.fillRect(0,H/2-36,W,72);
+    ctx.fillStyle='#fff';ctx.font=`bold ${Math.round(W*.05)}px Segoe UI,Arial,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(wrongMsg,W/2,H/2);
+  }
+  // HUD bg
+  ctx.fillStyle='rgba(10,10,30,.75)';ctx.fillRect(0,0,W,Math.round(H*.1));
+  const hudMid=Math.round(H*.05);
+  const fs=Math.max(11,Math.round(W*.032));
+  // question — drawn LTR by reversing canvas direction trick: just build string normally, canvas is neutral here
+  ctx.fillStyle='#c5c1f5';ctx.font=`bold ${Math.round(W*.068)}px Segoe UI,Arial,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(currentQ.a+' \u00d7 '+currentQ.b+' = ?',W/2,hudMid*.6);
+  // score
+  ctx.fillStyle='#9FE1CB';ctx.font=`bold ${fs}px Segoe UI,Arial,sans-serif`;
+  ctx.textAlign='right';ctx.fillText('\u05e0\u05d9\u05e7\u05d5\u05d3: '+score,W-8,hudMid*1.55);
+  // highscore
+  ctx.fillStyle='#EF9F27';ctx.textAlign='left';
+  ctx.fillText('\u05e9\u05d9\u05d0: '+highScore,8,hudMid*.45);
+  // lives
+  ctx.fillStyle='#f09595';
+  ctx.fillText('\u2665'.repeat(lives)+'\u2661'.repeat(Math.max(0,3-lives)),8,hudMid*1.55);
+  // level (group of 5 correct = 1 level)
+  ctx.fillStyle='#EF9F27';ctx.textAlign='center';
+  ctx.fillText('\u05e8\u05de\u05d4 '+(Math.floor(questionNum/5)+1),W/2,hudMid*1.55);
+
+  // level-up flash overlay
+  if(levelUpFlash>0){
+    const t=levelUpFlash/90;
+    const alpha=levelUpFlash>60?(90-levelUpFlash)/30*0.85:t*0.85;
+    ctx.fillStyle=`rgba(90,70,200,${alpha*0.45})`;ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle='#fff';ctx.font=`bold ${Math.round(W*.13)}px Segoe UI,Arial,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('רמה '+(Math.floor(questionNum/5)+1)+'!',W/2,H/2-Math.round(W*.04));
+    ctx.font=`${Math.round(W*.055)}px Segoe UI,Arial,sans-serif`;
+    ctx.fillStyle='#c5c1f5';ctx.fillText('כל הכבוד! 🌟',W/2,H/2+Math.round(W*.08));
+    ctx.globalAlpha=1;levelUpFlash--;
+  }
+
+  asteroids.forEach(drawAsteroid);
+  bullets.forEach(b=>{
+    ctx.save();ctx.lineCap='round';
+    ctx.strokeStyle='rgba(239,159,39,0.25)';ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(b.x,b.y+18);ctx.lineTo(b.x,b.y);ctx.stroke();
+    ctx.strokeStyle='rgba(255,220,100,0.7)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(b.x,b.y+16);ctx.lineTo(b.x,b.y);ctx.stroke();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(b.x,b.y+14);ctx.lineTo(b.x,b.y);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,2.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+  drawShip(ship.x,ship.y);
+  particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+  ctx.globalAlpha=1;
+}
+
+function showEnd(){
+  cancelAnimationFrame(animId);
+  if(score>highScore){highScore=score;localStorage.setItem('multHS',highScore);}
+  draw();
+  const ov=document.getElementById('overlay');
+  ov.style.display='flex';ov.style.pointerEvents='auto';
+  let errHtml='';
+  if(wrongAnswers.length>0){
+    const rows=wrongAnswers.map(e=>`<tr><td style="padding:3px 10px;color:#c5c1f5;">${e.a}\u00d7${e.b}</td><td style="padding:3px 10px;color:#f09595;">${e.got}</td><td style="padding:3px 10px;color:#9FE1CB;">\u2713 ${e.ans}</td></tr>`).join('');
+    errHtml=`<div style="margin:10px 0 14px;background:rgba(0,0,0,.5);border-radius:10px;padding:8px 4px;max-height:140px;overflow-y:auto;width:90%;"><p style="font-size:clamp(10px,2.2vw,12px);color:#f09595;margin-bottom:5px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e9\u05d8\u05e2\u05d9\u05ea \u05d1\u05d4\u05df (${wrongAnswers.length})</p><table style="width:100%;border-collapse:collapse;font-size:clamp(11px,2.5vw,13px);font-weight:700;text-align:center;"><thead><tr><td style="padding:2px 8px;color:#888;">\u05e9\u05d0\u05dc\u05d4</td><td style="padding:2px 8px;color:#888;">\u05e2\u05e0\u05d9\u05ea</td><td style="padding:2px 8px;color:#888;">\u05e0\u05db\u05d5\u05df</td></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  ov.innerHTML=`
+    <h2 style="color:#f09595;margin-bottom:6px;">&#128165; \u05de\u05e9\u05d7\u05e7 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd</h2>
+    <p style="font-size:clamp(16px,4vw,20px);font-weight:700;color:#c5c1f5;margin-bottom:3px;">\u05e0\u05d9\u05e7\u05d5\u05d3: ${score}</p>
+    <p style="font-size:clamp(11px,2.5vw,13px);color:#888;margin-bottom:3px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e0\u05db\u05d5\u05e0\u05d5\u05ea: ${Math.round(score/10)}</p>
+    <p style="font-size:clamp(11px,2.5vw,13px);color:#EF9F27;margin-bottom:8px;">&#127942; \u05e9\u05d9\u05d0: ${highScore}</p>
+    ${errHtml}
+    <button onclick="initGame()" style="padding:10px 26px;font-size:clamp(13px,3vw,15px);font-weight:700;border-radius:12px;border:none;background:#5b4fcf;color:#fff;cursor:pointer;margin-bottom:8px;">&#128257; \u05e9\u05d7\u05e7 \u05e9\u05d5\u05d1</button>
+    <button onclick="resetAll()" style="padding:8px 20px;font-size:clamp(11px,2.5vw,13px);font-weight:700;border-radius:12px;border:2px solid #3a3560;background:transparent;color:#888;cursor:pointer;">\u05e9\u05e0\u05d4 \u05e1\u05e4\u05e8\u05d4</button>`;
+}
+
+function loop(){if(!gameRunning)return;update();draw();animId=requestAnimationFrame(loop);}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;
+  if(e.key==='ArrowRight'||e.key==='d')keys.right=true;
+  if(e.key===' '){e.preventDefault();fireBullet();}
+});
+document.addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;
+  if(e.key==='ArrowRight'||e.key==='d')keys.right=false;
+});
+
+function renderGrid(){
+  const g=document.getElementById('numGrid');g.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const b=document.createElement('button');
+    b.className='num-btn'+((!isChallenge&&chosen===i)?' active':'');
+    b.textContent=i;
+    b.onclick=(n=>()=>{chosen=n;isChallenge=false;renderGrid();initGame();})(i);
+    g.appendChild(b);
+  }
+  document.getElementById('challengeBtn').className='btn-challenge'+(isChallenge?' active-ch':'');
+}
+
+function pickChallenge(){isChallenge=true;chosen=null;renderGrid();initGame();}
+
+function resetAll(){
+  gameRunning=false;if(animId)cancelAnimationFrame(animId);
+  chosen=null;isChallenge=false;renderGrid();
+  resizeCanvas();
+  ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);drawStars();
+  const ov=document.getElementById('overlay');
+  ov.style.display='flex';ov.style.pointerEvents='none';
+  ov.innerHTML='<h2>&#128640; \u05db\u05e4\u05dc \u05d1\u05d7\u05dc\u05dc</h2><p>\u05d1\u05d7\u05e8 \u05e1\u05e4\u05e8\u05d4 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc</p>';
+}
+
+// ── Boot ───────────────────────────────────────────────────
+resizeCanvas();initStars();
+window.addEventListener('resize',()=>{resizeCanvas();if(!gameRunning){ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);drawStars();}});
+renderGrid();
+ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);
+drawStars();
+</script>
+</body>
+</html>
