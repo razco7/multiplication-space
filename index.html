@@ -29,12 +29,19 @@
   .mc-btn:active{background:#2a2560;}
   .mc-fire{flex:1.4;background:#5b4fcf;border-color:#7f77dd;color:#fff;}
   .mc-fire:active{background:#4a3fb8;}
+  .mode-selector{display:flex;gap:6px;margin-bottom:8px;width:100%;}
+  .mode-btn{flex:1;padding:clamp(8px,1.2vh,11px);font-size:clamp(14px,2.5vw,16px);font-weight:700;border-radius:10px;border:2px solid #3a3560;background:#1a1a3a;color:#c5c1f5;cursor:pointer;transition:all .15s;}
+  .mode-btn.active{background:#5b4fcf;border-color:#7f77dd;color:#fff;}
 </style>
 </head>
 <body>
 <div id="ui" dir="rtl">
   <h1>&#128640; כפל בחלל &#128640;</h1>
-  <div class="num-label">בחר ספרה</div>
+  <div class="mode-selector" dir="ltr">
+    <button class="mode-btn active" id="modeMultiply" onclick="setMode('multiply')">&#215; כפל</button>
+    <button class="mode-btn" id="modeDivide" onclick="setMode('divide')">&#247; חילוק</button>
+  </div>
+  <div class="num-label" id="numLabel">בחר ספרה</div>
   <div class="number-grid" id="numGrid" dir="ltr" role="group" aria-label="בחר ספרה לתרגול"></div>
   <button class="btn-challenge" id="challengeBtn" onclick="pickChallenge()">&#127942; מצב אתגר — כל הספרות</button>
 </div>
@@ -63,7 +70,7 @@ let W=400,H=500;
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 
-let chosen=null,isChallenge=false;
+let chosen=null,isChallenge=false,gameMode='multiply';
 let lives,score,questionNum,gameRunning=false,animId;
 let ship,bullets,asteroids,particles,currentQ,wrongFlash,levelSpeed,wrongMsg,wrongMsgTimer,questionQueue;
 let levelUpFlash=0,wrongAnswers=[];
@@ -95,8 +102,13 @@ function resizeCanvas(){
 // ── Questions ──────────────────────────────────────────────
 function buildQueue(n,ch){
   let p=[];
-  if(ch){for(let a=2;a<=10;a++)for(let b=1;b<=10;b++)p.push({a,b,ans:a*b});}
-  else{for(let b=1;b<=10;b++)p.push({a:n,b,ans:n*b});}
+  if(gameMode==='divide'){
+    if(ch){for(let a=2;a<=10;a++)for(let b=1;b<=10;b++)p.push({a:a*b,b:a,ans:b});}
+    else{for(let b=1;b<=10;b++)p.push({a:n*b,b:n,ans:b});}
+  } else {
+    if(ch){for(let a=2;a<=10;a++)for(let b=1;b<=10;b++)p.push({a,b,ans:a*b});}
+    else{for(let b=1;b<=10;b++)p.push({a:n,b,ans:n*b});}
+  }
   return shuffle(p);
 }
 function nextFromQueue(){
@@ -106,7 +118,7 @@ function nextFromQueue(){
 function makeChoices(correct){
   const s=new Set([correct]);
   let t=0;
-  while(s.size<4&&t++<300){const v=correct+(Math.floor(Math.random()*9)+1)*(Math.random()<.5?1:-1);if(v>0)s.add(v);}
+  while(s.size<4&&t++<300){const v=correct+(Math.floor(Math.random()*9)+1)*(Math.random()<.5?1:-1);if(v>0&&(gameMode!=='divide'||v<=10))s.add(v);}
   return shuffle([...s]);
 }
 
@@ -186,7 +198,7 @@ function update(){
           setTimeout(nextQuestion,400);
         } else {
           lives--;wrongFlash=30;
-          wrongAnswers.push({a:currentQ.a,b:currentQ.b,ans:currentQ.ans,got:a.val});
+          wrongAnswers.push({a:currentQ.a,b:currentQ.b,ans:currentQ.ans,got:a.val,mode:gameMode});
           wrongMsg=`\u05d8\u05e2\u05d5\u05ea! \u05d4\u05ea\u05e9\u05d5\u05d1\u05d4 \u05d4\u05e0\u05db\u05d5\u05e0\u05d4 \u05d4\u05d9\u05d0 ${currentQ.ans}`;
           wrongMsgTimer=120;
           spawnParticles(a.x,a.y,'#f09595',14);playExplosion();playWrong();
@@ -262,7 +274,7 @@ function draw(){
   // question — drawn LTR by reversing canvas direction trick: just build string normally, canvas is neutral here
   ctx.fillStyle='#c5c1f5';ctx.font=`bold ${Math.round(W*.068)}px Segoe UI,Arial,sans-serif`;
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(currentQ.a+' \u00d7 '+currentQ.b+' = ?',W/2,hudMid*.6+HP);
+  ctx.fillText(currentQ.a+(gameMode==='divide'?' \u00f7 ':' \u00d7 ')+currentQ.b+' = ?',W/2,hudMid*.6+HP);
   // score
   ctx.fillStyle='#9FE1CB';ctx.font=`bold ${fs}px Segoe UI,Arial,sans-serif`;
   ctx.textAlign='right';ctx.fillText('\u05e0\u05d9\u05e7\u05d5\u05d3: '+score,W-HP,hudMid*1.55+HP);
@@ -309,14 +321,15 @@ function draw(){
 
 function showEnd(){
   cancelAnimationFrame(animId);
-  if(score>highScore){highScore=score;localStorage.setItem('multHS',highScore);}
+  const hsKey=gameMode==='divide'?'divHS':'multHS';
+  if(score>highScore){highScore=score;localStorage.setItem(hsKey,highScore);}
   draw();
   window._gameScore=score;
   const ov=document.getElementById('overlay');
   ov.style.display='flex';ov.style.pointerEvents='auto';
   let errHtml='';
   if(wrongAnswers.length>0){
-    const rows=wrongAnswers.map(e=>`<tr><td style="padding:3px 10px;color:#c5c1f5;">${e.a}\u00d7${e.b}</td><td style="padding:3px 10px;color:#f09595;">${e.got}</td><td style="padding:3px 10px;color:#9FE1CB;">\u2713 ${e.ans}</td></tr>`).join('');
+    const rows=wrongAnswers.map(e=>`<tr><td style="padding:3px 10px;color:#c5c1f5;">${e.a}${e.mode==='divide'?'\u00f7':'\u00d7'}${e.b}</td><td style="padding:3px 10px;color:#f09595;">${e.got}</td><td style="padding:3px 10px;color:#9FE1CB;">\u2713 ${e.ans}</td></tr>`).join('');
     errHtml=`<div style="margin:10px 0 12px;background:rgba(0,0,0,.5);border-radius:10px;padding:8px 4px;max-height:130px;overflow-y:auto;width:90%;"><p style="font-size:12px;color:#f09595;margin-bottom:5px;">\u05e9\u05d0\u05dc\u05d5\u05ea \u05e9\u05d8\u05e2\u05d9\u05ea \u05d1\u05d4\u05df (${wrongAnswers.length})</p><table style="width:100%;border-collapse:collapse;font-size:13px;font-weight:700;text-align:center;"><thead><tr><td style="padding:2px 8px;color:#888;">\u05e9\u05d0\u05dc\u05d4</td><td style="padding:2px 8px;color:#888;">\u05e2\u05e0\u05d9\u05ea</td><td style="padding:2px 8px;color:#888;">\u05e0\u05db\u05d5\u05df</td></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   ov.innerHTML=`
@@ -369,14 +382,21 @@ function renderGrid(){
 
 function pickChallenge(){isChallenge=true;chosen=null;renderGrid();initGame();}
 
+function setMode(m){
+  gameMode=m;
+  highScore=parseInt(localStorage.getItem(m==='divide'?'divHS':'multHS')||'0');
+  document.getElementById('modeMultiply').classList.toggle('active',m==='multiply');
+  document.getElementById('modeDivide').classList.toggle('active',m==='divide');
+  document.getElementById('numLabel').textContent=m==='divide'?'\u05d1\u05d7\u05e8 \u05de\u05d7\u05dc\u05e7':'\u05d1\u05d7\u05e8 \u05e1\u05e4\u05e8\u05d4';
+  chosen=null;isChallenge=false;renderGrid();
+}
+
 function resetAll(){
   gameRunning=false;if(animId)cancelAnimationFrame(animId);
   chosen=null;isChallenge=false;renderGrid();
   resizeCanvas();
   ctx.fillStyle='#080818';ctx.fillRect(0,0,W,H);drawStars();
-  const ov=document.getElementById('overlay');
-  ov.style.display='flex';ov.style.pointerEvents='none';
-  ov.innerHTML='<h2>&#128640; \u05db\u05e4\u05dc \u05d1\u05d7\u05dc\u05dc</h2><p>\u05d1\u05d7\u05e8 \u05e1\u05e4\u05e8\u05d4 \u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05d7\u05d9\u05dc</p>';
+  document.getElementById('overlay').style.display='none';
 }
 
 // ── Boot ───────────────────────────────────────────────────
